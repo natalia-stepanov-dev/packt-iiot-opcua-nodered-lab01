@@ -3,6 +3,9 @@
   "version": "0.0.56",
   "description": "Simple OPCUA Server made with node-opcua",
   "main": "server.js",
+  "engines": {
+    "node": ">=22.13"
+  },
   "dependencies": {
     "node-opcua": "2.187.18"
   },
