@@ -11,7 +11,10 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "author": "Etienne Rossignon <etienne.rossignon@gadz.org>",
   "license": "MIT",
@@ -28,5 +31,11 @@
     "opcua",
     "nodejs",
     "javascript"
-  ]
+  ],
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.13.0",
+    "globals": "17.13.0",
+    "prettier": "3.9.10"
+  }
 }
