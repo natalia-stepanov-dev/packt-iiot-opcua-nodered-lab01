@@ -9,10 +9,12 @@ const { OPCUAClient, AttributeIds, DataType, StatusCodes } = require("node-opcua
 
 const ENDPOINT = "opc.tcp://localhost:26543";
 const SERVER_FILE = path.join(__dirname, "..", "..", "src", "main.js");
+const NAMESPACE_URI = "urn:iiot-edge-gateway";
 
 let serverProcess;
 let client;
 let session;
+let nsIndex;
 
 // We start the real server as a separate process. So the test does not
 // depend on how the server code is built inside.
@@ -35,8 +37,8 @@ function startServer() {
     });
 }
 
-function readValue(nodeId) {
-    return session.read({ nodeId, attributeId: AttributeIds.Value });
+function readValue(name) {
+    return session.read({ nodeId: `ns=${nsIndex};s=${name}`, attributeId: AttributeIds.Value });
 }
 
 before(async () => {
@@ -47,6 +49,14 @@ before(async () => {
     });
     await client.connect(ENDPOINT);
     session = await client.createSession();
+    // The server gives out namespace numbers, so we never write ns=2
+    // by hand. We look the number up by URI, like a real client.
+    const namespaceArray = await session.read({
+        nodeId: "ns=0;i=2255",
+        attributeId: AttributeIds.Value,
+    });
+    nsIndex = namespaceArray.value.value.indexOf(NAMESPACE_URI);
+    assert.notEqual(nsIndex, -1, `Namespace ${NAMESPACE_URI} not found`);
 });
 
 after(async () => {
@@ -56,7 +66,7 @@ after(async () => {
 });
 
 test("Memory usage is a Double from 0 to 100", async () => {
-    const dataValue = await readValue("ns=1;b=1020ffab");
+    const dataValue = await readValue("Gateway.Memory.Usage");
     assert.equal(dataValue.statusCode.value, StatusCodes.Good.value);
     assert.equal(dataValue.value.dataType, DataType.Double);
     assert.ok(dataValue.value.value >= 0 && dataValue.value.value <= 100);
@@ -65,10 +75,10 @@ test("Memory usage is a Double from 0 to 100", async () => {
 // The first CPU sample comes after about 1 s. Before that the status is
 // BadWaitingForInitialData, so we wait a little.
 test("CPU usage becomes Good and is from 0 to 100", async () => {
-    let dataValue = await readValue("ns=1;s=CPU");
+    let dataValue = await readValue("Gateway.Cpu.Usage");
     for (let i = 0; i < 15 && dataValue.statusCode.value !== StatusCodes.Good.value; i++) {
         await new Promise((resolve) => setTimeout(resolve, 200));
-        dataValue = await readValue("ns=1;s=CPU");
+        dataValue = await readValue("Gateway.Cpu.Usage");
     }
     assert.equal(dataValue.statusCode.value, StatusCodes.Good.value);
     assert.equal(dataValue.value.dataType, DataType.Double);
@@ -77,7 +87,7 @@ test("CPU usage becomes Good and is from 0 to 100", async () => {
 
 test("CPU usage cannot be written", async () => {
     const status = await session.write({
-        nodeId: "ns=1;s=CPU",
+        nodeId: `ns=${nsIndex};s=Gateway.Cpu.Usage`,
         attributeId: AttributeIds.Value,
         value: { value: { dataType: DataType.Double, value: 5 } },
     });

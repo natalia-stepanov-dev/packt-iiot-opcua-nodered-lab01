@@ -3,17 +3,35 @@ const { Variant, DataType, StatusCodes } = require("node-opcua");
 const { readCpuTimes, cpuUsagePercent } = require("../signals/cpu");
 const { memoryUsagePercent } = require("../signals/memory");
 
-function constructAddressSpace(server) {
-    const namespace = server.engine.addressSpace.getOwnNamespace();
+// The URI of ns=1 has the host name in it, and in Docker the host
+// name changes. This URI stays the same, so clients can find our
+// nodes by it on any machine.
+const NAMESPACE_URI = "urn:iiot-edge-gateway";
 
-    const myDevice = namespace.addFolder("ObjectsFolder", {
-        browseName: "MyDevice",
+function constructAddressSpace(server) {
+    const addressSpace = server.engine.addressSpace;
+    const namespace = addressSpace.registerNamespace(NAMESPACE_URI);
+
+    const gateway = namespace.addObject({
+        organizedBy: addressSpace.rootFolder.objects,
+        nodeId: "s=Gateway",
+        browseName: "Gateway",
+    });
+    const cpu = namespace.addObject({
+        componentOf: gateway,
+        nodeId: "s=Gateway.Cpu",
+        browseName: "Cpu",
+    });
+    const memory = namespace.addObject({
+        componentOf: gateway,
+        nodeId: "s=Gateway.Memory",
+        browseName: "Memory",
     });
 
     namespace.addVariable({
-        componentOf: myDevice,
-        nodeId: "b=1020ffab",
-        browseName: "Percentage Memory Used",
+        componentOf: memory,
+        nodeId: "s=Gateway.Memory.Usage",
+        browseName: "Usage",
         dataType: "Double",
         minimumSamplingInterval: 1000,
         value: {
@@ -24,9 +42,9 @@ function constructAddressSpace(server) {
     // Sampled by a timer below. Measuring inside a getter blocked
     // the server for 1 s per read.
     const cpuNode = namespace.addVariable({
-        componentOf: myDevice,
-        nodeId: "s=CPU",
-        browseName: "Percentage CPU Used",
+        componentOf: cpu,
+        nodeId: "s=Gateway.Cpu.Usage",
+        browseName: "Usage",
         dataType: "Double",
         accessLevel: "CurrentRead",
         userAccessLevel: "CurrentRead",
