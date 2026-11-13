@@ -17,7 +17,7 @@ const { loadConfig } = require("./config");
         });
 
         await server.initialize();
-        constructAddressSpace(server);
+        const stopSignals = constructAddressSpace(server);
         await server.start();
         console.log("Server is now listening ... ( press CTRL+C to stop) ");
         server.endpoints[0].endpointDescriptions().forEach(function (endpoint) {
@@ -28,12 +28,30 @@ const { loadConfig } = require("./config");
             );
         });
 
-        process.on("SIGINT", async () => {
-            await server.shutdown();
-            console.log("terminated");
-        });
+        // A second signal during shutdown must not start it again.
+        let stopping = false;
+        async function shutdown(signal) {
+            if (stopping) {
+                return;
+            }
+            stopping = true;
+            console.log(`${signal} received, shutting down`);
+            try {
+                stopSignals();
+                await server.shutdown();
+                console.log("terminated");
+                process.exit(0);
+            } catch (err) {
+                console.log(err);
+                process.exit(1);
+            }
+        }
+
+        // Ctrl+C sends SIGINT. Docker stop sends SIGTERM.
+        process.on("SIGINT", () => shutdown("SIGINT"));
+        process.on("SIGTERM", () => shutdown("SIGTERM"));
     } catch (err) {
         console.log(err);
-        process.exit(-1);
+        process.exit(1);
     }
 })();

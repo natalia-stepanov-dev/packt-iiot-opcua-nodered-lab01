@@ -93,8 +93,9 @@ function constructAddressSpace(server) {
         );
     }, 1000);
 
-    // Without unref() the process keeps running after Ctrl+C.
-    cpuTimer.unref();
+    // main.js calls this on shutdown, so the timer does not write
+    // to a server that is already closed.
+    return () => clearInterval(cpuTimer);
 }
 
 module.exports = { constructAddressSpace };
