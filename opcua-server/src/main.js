@@ -1,11 +1,13 @@
 "use strict";
 const { OPCUAServer, nodesets } = require("node-opcua");
 const { constructAddressSpace } = require("./opcua/address-space");
+const { loadConfig } = require("./config");
 
 (async () => {
     try {
+        const config = loadConfig();
         const server = new OPCUAServer({
-            port: 26543,
+            port: config.port,
             nodeset_filename: [nodesets.standard, nodesets.di],
             buildInfo: {
                 productName: "Sample NodeOPCUA Server1",
