@@ -6,22 +6,20 @@ const {
     nodesets,
     StatusCodes,
     VariantArrayType,
-    ServerEngine
+    ServerEngine,
 } = require("node-opcua");
 const os = require("os");
-
 
 /**
  * @param server {OPCUAServer} server
  */
 function constructAddressSpace(server) {
-
     const addressSpace = server.engine.addressSpace;
     const namespace = addressSpace.getOwnNamespace();
 
     // we create a new folder under RootFolder
     const myDevice = namespace.addFolder("ObjectsFolder", {
-        browseName: "MyDevice"
+        browseName: "MyDevice",
     });
 
     // now let's add first variable in folder
@@ -38,10 +36,9 @@ function constructAddressSpace(server) {
                 const t = new Date() / 10000.0;
                 const value = variable1 + 10.0 * Math.sin(t);
                 return new Variant({ dataType: DataType.Double, value: value });
-            }
-        }
+            },
+        },
     });
-    
 
     const nodeVariable2 = namespace.addVariable({
         componentOf: myDevice,
@@ -50,7 +47,7 @@ function constructAddressSpace(server) {
     });
     nodeVariable2.setValueFromSource({
         dataType: DataType.String,
-        value: "Learn Node-OPCUA ! Read https://leanpub.com/node-opcuabyexample"
+        value: "Learn Node-OPCUA ! Read https://leanpub.com/node-opcuabyexample",
     });
 
     const nodeVariable3 = namespace.addVariable({
@@ -60,15 +57,13 @@ function constructAddressSpace(server) {
         arrayDimensions: [3],
         accessLevel: "CurrentRead | CurrentWrite",
         userAccessLevel: "CurrentRead | CurrentWrite",
-        valueRank: 1
-
+        valueRank: 1,
     });
     nodeVariable3.setValueFromSource({
         dataType: DataType.Double,
         arrayType: VariantArrayType.Array,
-        value: [1.0, 2.0, 3.0]
+        value: [1.0, 2.0, 3.0],
     });
-
 
     const nodeVariable4 = namespace.addVariable({
         componentOf: myDevice,
@@ -79,11 +74,11 @@ function constructAddressSpace(server) {
         value: {
             get: () => {
                 // const value = process.memoryUsage().heapUsed / 1000000;
-                const percentageMemUsed = 1.0 - (os.freemem() / os.totalmem());
+                const percentageMemUsed = 1.0 - os.freemem() / os.totalmem();
                 const value = percentageMemUsed * 100;
                 return new Variant({ dataType: DataType.Double, value: value });
-            }
-        }
+            },
+        },
     });
 
     // Sampled by a timer below. Measuring inside a getter blocked
@@ -95,14 +90,14 @@ function constructAddressSpace(server) {
         dataType: "Double",
         accessLevel: "CurrentRead",
         userAccessLevel: "CurrentRead",
-        minimumSamplingInterval: 1000
+        minimumSamplingInterval: 1000,
     });
 
     // Until the first sample clients see BadWaitingForInitialData,
     // not a 0 that looks real.
     cpuNode.setValueFromSource(
         { dataType: DataType.Double, value: 0 },
-        StatusCodes.BadWaitingForInitialData
+        StatusCodes.BadWaitingForInitialData,
     );
 
     let previousTimes = readCpuTimes();
@@ -123,7 +118,7 @@ function constructAddressSpace(server) {
         cpuNode.setValueFromSource(
             { dataType: DataType.Double, value: usagePercent },
             StatusCodes.Good,
-            new Date()
+            new Date(),
         );
     }, 1000);
 
@@ -143,22 +138,18 @@ function readCpuTimes() {
 }
 
 (async () => {
-
     try {
         // Let create an instance of OPCUAServer
         const server = new OPCUAServer({
-            port: 26543,        // the port of the listening socket of the server
+            port: 26543, // the port of the listening socket of the server
 
-            nodeset_filename: [
-                nodesets.standard,
-                nodesets.di
-            ],
+            nodeset_filename: [nodesets.standard, nodesets.di],
             buildInfo: {
                 productName: "Sample NodeOPCUA Server1",
 
                 buildNumber: "7658",
-                buildDate: new Date(2020, 6, 14)
-            }
+                buildDate: new Date(2020, 6, 14),
+            },
         });
 
         await server.initialize();
@@ -169,15 +160,17 @@ function readCpuTimes() {
         await server.start();
 
         console.log("Server is now listening ... ( press CTRL+C to stop) ");
-        server.endpoints[0].endpointDescriptions().forEach(function(endpoint) {
-            console.log(endpoint.endpointUrl, endpoint.securityMode.toString(), endpoint.securityPolicyUri.toString());
+        server.endpoints[0].endpointDescriptions().forEach(function (endpoint) {
+            console.log(
+                endpoint.endpointUrl,
+                endpoint.securityMode.toString(),
+                endpoint.securityPolicyUri.toString(),
+            );
         });
-
 
         process.on("SIGINT", async () => {
             await server.shutdown();
             console.log("terminated");
-
         });
     } catch (err) {
         console.log(err);

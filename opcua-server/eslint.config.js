@@ -8,7 +8,7 @@ module.exports = defineConfig([
         files: ["**/*.js"],
         languageOptions: {
             sourceType: "commonjs",
-            globals: globals.node
-        }
-    }
+            globals: globals.node,
+        },
+    },
 ]);
