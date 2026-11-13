@@ -8,7 +8,7 @@ const { loadConfig } = require("./config");
         const config = loadConfig();
         const server = new OPCUAServer({
             port: config.port,
-            nodeset_filename: [nodesets.standard, nodesets.di],
+            nodeset_filename: [nodesets.standard],
             buildInfo: {
                 productName: "Sample NodeOPCUA Server1",
                 buildNumber: "7658",

@@ -55,12 +55,6 @@ after(async () => {
     if (serverProcess) serverProcess.kill();
 });
 
-test("Temperature is a Double with Good status", async () => {
-    const dataValue = await readValue("ns=1;s=Temperature");
-    assert.equal(dataValue.statusCode.value, StatusCodes.Good.value);
-    assert.equal(dataValue.value.dataType, DataType.Double);
-});
-
 test("Memory usage is a Double from 0 to 100", async () => {
     const dataValue = await readValue("ns=1;b=1020ffab");
     assert.equal(dataValue.statusCode.value, StatusCodes.Good.value);

@@ -1,49 +1,13 @@
 "use strict";
-const { Variant, DataType, StatusCodes, VariantArrayType } = require("node-opcua");
+const { Variant, DataType, StatusCodes } = require("node-opcua");
 const { readCpuTimes, cpuUsagePercent } = require("../signals/cpu");
 const { memoryUsagePercent } = require("../signals/memory");
-const { simulatedTemperature } = require("../signals/simulation");
 
 function constructAddressSpace(server) {
     const namespace = server.engine.addressSpace.getOwnNamespace();
 
     const myDevice = namespace.addFolder("ObjectsFolder", {
         browseName: "MyDevice",
-    });
-
-    namespace.addVariable({
-        componentOf: myDevice,
-        nodeId: "s=Temperature",
-        browseName: "Temperature",
-        dataType: "Double",
-        value: {
-            get: () => new Variant({ dataType: DataType.Double, value: simulatedTemperature() }),
-        },
-    });
-
-    const nodeVariable2 = namespace.addVariable({
-        componentOf: myDevice,
-        browseName: "MyVariable2",
-        dataType: "String",
-    });
-    nodeVariable2.setValueFromSource({
-        dataType: DataType.String,
-        value: "Learn Node-OPCUA ! Read https://leanpub.com/node-opcuabyexample",
-    });
-
-    const nodeVariable3 = namespace.addVariable({
-        componentOf: myDevice,
-        browseName: "MyVariable3",
-        dataType: "Double",
-        arrayDimensions: [3],
-        accessLevel: "CurrentRead | CurrentWrite",
-        userAccessLevel: "CurrentRead | CurrentWrite",
-        valueRank: 1,
-    });
-    nodeVariable3.setValueFromSource({
-        dataType: DataType.Double,
-        arrayType: VariantArrayType.Array,
-        value: [1.0, 2.0, 3.0],
     });
 
     namespace.addVariable({
