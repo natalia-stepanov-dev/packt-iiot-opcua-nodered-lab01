@@ -86,28 +86,60 @@ function constructAddressSpace(server) {
         }
     });
 
-    const nodeVariable5 = namespace.addVariable({
+    // Sampled by a timer below. Measuring inside a getter blocked
+    // the server for 1 s per read.
+    const cpuNode = namespace.addVariable({
         componentOf: myDevice,
         nodeId: "s=CPU",
         browseName: "Percentage CPU Used",
         dataType: "Double",
-        minimumSamplingInterval: 1000,
-        value: {
-            get: () => {
-const previousUsage = process.cpuUsage();
-              const startDate = Date.now();
-              while (Date.now() - startDate < 500);
-
-// At this moment you can expect result 100%
-// Time is *1000 because cpuUsage is in us (microseconds)
-const usage = process.cpuUsage(previousUsage);
-const value = 100 * (usage.user + usage.system) / ((Date.now() - startDate) * 1000)
-                return new Variant({ dataType: DataType.Double, value: value });
-            }
-        }
+        accessLevel: "CurrentRead",
+        userAccessLevel: "CurrentRead",
+        minimumSamplingInterval: 1000
     });
 
-    // please 
+    // Until the first sample clients see BadWaitingForInitialData,
+    // not a 0 that looks real.
+    cpuNode.setValueFromSource(
+        { dataType: DataType.Double, value: 0 },
+        StatusCodes.BadWaitingForInitialData
+    );
+
+    let previousTimes = readCpuTimes();
+
+    // One sample per second matches minimumSamplingInterval above.
+    const cpuTimer = setInterval(() => {
+        const currentTimes = readCpuTimes();
+        const idleDelta = currentTimes.idle - previousTimes.idle;
+        const totalDelta = currentTimes.total - previousTimes.total;
+        previousTimes = currentTimes;
+
+        // Shouldn't happen with a 1 s interval, but never divide by zero.
+        if (totalDelta <= 0) {
+            return;
+        }
+
+        const usagePercent = 100 * (1 - idleDelta / totalDelta);
+        cpuNode.setValueFromSource(
+            { dataType: DataType.Double, value: usagePercent },
+            StatusCodes.Good,
+            new Date()
+        );
+    }, 1000);
+
+    // Without unref() the process keeps running after Ctrl+C.
+    cpuTimer.unref();
+}
+
+// The counters are totals since boot, so one reading says nothing on its own.
+function readCpuTimes() {
+    let idle = 0;
+    let total = 0;
+    for (const { times } of os.cpus()) {
+        idle += times.idle;
+        total += times.user + times.nice + times.sys + times.idle + times.irq;
+    }
+    return { idle, total };
 }
 
 (async () => {
