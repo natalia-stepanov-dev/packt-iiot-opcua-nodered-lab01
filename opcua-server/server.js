@@ -6,7 +6,6 @@ const {
     nodesets,
     StatusCodes,
     VariantArrayType,
-    ServerEngine,
 } = require("node-opcua");
 const os = require("os");
 
@@ -65,7 +64,7 @@ function constructAddressSpace(server) {
         value: [1.0, 2.0, 3.0],
     });
 
-    const nodeVariable4 = namespace.addVariable({
+    namespace.addVariable({
         componentOf: myDevice,
         nodeId: "b=1020ffab",
         browseName: "Percentage Memory Used",
