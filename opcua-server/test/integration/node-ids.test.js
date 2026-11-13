@@ -8,14 +8,14 @@ const path = require("node:path");
 const { OPCUAClient, AttributeIds, DataType, StatusCodes } = require("node-opcua");
 
 const ENDPOINT = "opc.tcp://localhost:26543";
-const SERVER_FILE = path.join(__dirname, "..", "..", "server.js");
+const SERVER_FILE = path.join(__dirname, "..", "..", "src", "main.js");
 
 let serverProcess;
 let client;
 let session;
 
 // We start the real server as a separate process. So the test does not
-// depend on how server.js is built inside.
+// depend on how the server code is built inside.
 function startServer() {
     return new Promise((resolve, reject) => {
         const child = spawn(process.execPath, [SERVER_FILE], {

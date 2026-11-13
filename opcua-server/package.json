@@ -2,7 +2,7 @@
   "name": "node-opcua-sampleserver",
   "version": "0.0.56",
   "description": "Simple OPCUA Server made with node-opcua",
-  "main": "server.js",
+  "main": "src/main.js",
   "engines": {
     "node": ">=22.13"
   },
@@ -11,7 +11,7 @@
   },
   "scripts": {
     "test": "node --test",
-    "start": "node server.js",
+    "start": "node src/main.js",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
