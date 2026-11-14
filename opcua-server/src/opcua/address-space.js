@@ -2,6 +2,7 @@
 const { addMemoryNotes } = require("./nodes/memory");
 const { addCpuNodes } = require("./nodes/cpu");
 const { addUptimeNodes } = require("./nodes/uptime");
+const { addDiskNodes } = require("./nodes/disk");
 
 // Not getOwnNamespace(). Its URI has the host name_ and Docker changes it
 const NAMESPACE_URI = "urn:iiot-edge-gateway";
@@ -20,6 +21,7 @@ function constructAddressSpace(server) {
     addMemoryNotes(namespace, gateway);
     const stopCpu = addCpuNodes(namespace, gateway);
     addUptimeNodes(namespace, gateway);
+    addDiskNodes(namespace, gateway);
 
     // So no timer writes to a server that is already closed
     return () => {

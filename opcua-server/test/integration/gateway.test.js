@@ -8,3 +8,4 @@ after(disconnect);
 require("./signals/memory");
 require("./signals/cpu");
 require("./signals/uptime");
+require("./signals/disk");
