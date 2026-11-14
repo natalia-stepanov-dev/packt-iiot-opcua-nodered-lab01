@@ -10,7 +10,7 @@
     "node-opcua": "2.187.18"
   },
   "scripts": {
-    "test": "node --test",
+    "test": "node --test \"test/**/*.test.js\"",
     "start": "node src/main.js",
     "lint": "eslint .",
     "format": "prettier --write .",
