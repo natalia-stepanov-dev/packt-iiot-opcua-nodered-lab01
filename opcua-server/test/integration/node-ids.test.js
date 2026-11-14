@@ -5,7 +5,7 @@ const { test, before, after } = require("node:test");
 const assert = require("node:assert/strict");
 const { spawn } = require("node:child_process");
 const path = require("node:path");
-const { OPCUAClient, AttributeIds, DataType, StatusCodes } = require("node-opcua");
+const { OPCUAClient, AttributeIds, DataType, StatusCodes, makeBrowsePath } = require("node-opcua");
 
 const ENDPOINT = "opc.tcp://localhost:26543";
 const SERVER_FILE = path.join(__dirname, "..", "..", "src", "main.js");
@@ -92,4 +92,29 @@ test("CPU usage cannot be written", async () => {
         value: { value: { dataType: DataType.Double, value: 5 } },
     });
     assert.equal(status.value, StatusCodes.BadNotWritable.value);
+});
+
+test("Memory usage cannot be written", async () => {
+    const status = await session.write({
+        nodeId: `ns=${nsIndex};s=Gateway.Memory.Usage`,
+        attributeId: AttributeIds.Value,
+        value: { value: { dataType: DataType.Double, value: 5 } },
+    });
+    assert.equal(status.value, StatusCodes.BadNotWritable.value);
+});
+
+// Clients like SCADA read the unit to label values. 20529 is the
+// UNECE code for percent.
+test("CPU and memory usage are in percent", async () => {
+    for (const name of ["Gateway.Cpu.Usage", "Gateway.Memory.Usage"]) {
+        const result = await session.translateBrowsePath(
+            makeBrowsePath(`ns=${nsIndex};s=${name}`, ".EngineeringUnits"),
+        );
+        assert.equal(result.statusCode.value, StatusCodes.Good.value, `${name} has no unit`);
+        const units = await session.read({
+            nodeId: result.targets[0].targetId,
+            attributeId: AttributeIds.Value,
+        });
+        assert.equal(units.value.value.unitId, 20529, name);
+    }
 });

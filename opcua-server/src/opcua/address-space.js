@@ -1,5 +1,5 @@
 "use strict";
-const { Variant, DataType, StatusCodes } = require("node-opcua");
+const { Variant, DataType, StatusCodes, standardUnits } = require("node-opcua");
 const { readCpuTimes, cpuUsagePercent } = require("../signals/cpu");
 const { memoryUsagePercent } = require("../signals/memory");
 
@@ -28,11 +28,15 @@ function constructAddressSpace(server) {
         browseName: "Memory",
     });
 
-    namespace.addVariable({
+    namespace.addAnalogDataItem({
         componentOf: memory,
         nodeId: "s=Gateway.Memory.Usage",
         browseName: "Usage",
         dataType: "Double",
+        engineeringUnits: standardUnits.percent,
+        engineeringUnitsRange: { low: 0, high: 100 },
+        accessLevel: "CurrentRead",
+        userAccessLevel: "CurrentRead",
         minimumSamplingInterval: 1000,
         value: {
             get: () => new Variant({ dataType: DataType.Double, value: memoryUsagePercent() }),
@@ -41,11 +45,13 @@ function constructAddressSpace(server) {
 
     // Sampled by a timer below. Measuring inside a getter blocked
     // the server for 1 s per read.
-    const cpuNode = namespace.addVariable({
+    const cpuNode = namespace.addAnalogDataItem({
         componentOf: cpu,
         nodeId: "s=Gateway.Cpu.Usage",
         browseName: "Usage",
         dataType: "Double",
+        engineeringUnits: standardUnits.percent,
+        engineeringUnitsRange: { low: 0, high: 100 },
         accessLevel: "CurrentRead",
         userAccessLevel: "CurrentRead",
         minimumSamplingInterval: 1000,
